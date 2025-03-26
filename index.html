@@ -1,0 +1,729 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>曲リスト</title>
+	
+	<style>
+  body {
+    font-family: Arial, sans-serif;
+    margin: 0;
+    padding: 20px;
+    background-color: #ffffff;
+    text-align: center;
+  }
+
+  /* タイトルロゴ部分 */
+  h1 {
+    background-image: url('images/rogo.png');
+    background-size: cover;
+    background-position: left center;
+    color: white;
+    padding-left: 30px;
+    padding-top: 60px;
+    height: 200px;
+    display: flex;
+    justify-content: flex-start;
+    align-items: center;
+    font-size: 40px;
+    font-weight: bold;
+  }
+
+  /* 曲リスト全体の枠 */
+  .song-list {
+    border: 2px solid #2c3e50;
+    background-color: #ffffff;
+    padding: 20px;
+    border-radius: 10px;
+    max-width: 800px;
+    margin: 40px auto;
+    box-shadow: none;
+    text-align: left;
+  }
+
+  /* アーティスト名（ネイビー背景＋白文字） */
+  .song-list h2 {
+    background-color: #2c3e50;
+    color: white;
+    padding: 8px 12px;
+    border-radius: 5px;
+    font-size: 18px;
+    margin-top: 24px;
+    margin-bottom: 12px;
+  }
+
+  /* 曲名（ブラウン） */
+  .song-title {
+    color: #8b5e3c;
+    font-weight: bold;
+    font-size: 16px;
+    margin-bottom: 4px;
+  }
+
+  /* 曲の区切り線（黄色） */
+  .song {
+    border-bottom: 1px solid #f1c40f;
+    padding: 10px 0;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+  }
+
+  /* 検索アイコン＋ラベル */
+  .search-icon {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    cursor: pointer;
+  }
+
+  .search-icon svg {
+    width: 28px;
+    height: 28px;
+    cursor: pointer;
+    vertical-align: middle;
+  }
+
+  .search-label {
+    color: #888;
+    font-size: 14px;
+    font-weight: normal;
+  }
+
+  /* 検索ボックス */
+  .search-container {
+    display: none;
+    position: fixed;
+    top: 50px;
+    left: 50%;
+    transform: translateX(-50%);
+    width: 90%;
+    max-width: 400px;
+    background: #f9fbfd;
+    border: 2px solid #2c3e50;
+    border-radius: 10px;
+    padding: 16px;
+    box-shadow: 0px 4px 8px rgba(0, 0, 0, 0.2);
+    text-align: left;
+    z-index: 100;
+    max-height: 80vh;
+    overflow-y: auto;
+  }
+
+  /* 検索見出し（ジャンル検索・年代検索など） */
+  .search-section-title {
+    background-color: #2c3e50;
+    color: white;
+    padding: 5px 10px;
+    font-weight: bold;
+    margin-top: 15px;
+    border-radius: 5px;
+    font-size: 14px;
+  }
+
+  /* キーワード入力欄 */
+  .search-container input[type="text"] {
+    border: 1px solid #ccc;
+    border-radius: 6px;
+    padding: 8px;
+    width: 90%;
+    max-width: 320px;
+    font-size: 13px;
+    background-color: #fff;
+    color: #2c3e50;
+  }
+
+  /* チェックボックス全体 */
+  .checkbox-group {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px 0;
+    margin-top: 8px;
+  }
+
+  .checkbox-group label {
+    width: 50%;
+    box-sizing: border-box;
+    display: flex;
+    align-items: center;
+    font-size: 13px;
+    white-space: nowrap;
+    gap: 6px;
+  }
+
+  .checkbox-group input[type="checkbox"] {
+    transform: scale(0.85);
+    accent-color: #2c3e50;
+    margin: 0;
+  }
+
+  /* 検索・クリアボタン */
+  .search-container button {
+    padding: 6px 12px;
+    background-color: #2c3e50;
+    color: white;
+    border: none;
+    border-radius: 6px;
+    cursor: pointer;
+    margin-top: 10px;
+    margin-right: 10px;
+    font-size: 13px;
+  }
+
+  .search-container button:hover {
+    background-color: #1e2f40;
+  }
+
+  /* ジャンルタグ（アイコン） */
+  .genre-tags {
+    display: flex !important;
+    gap: 5px;
+  }
+
+  .genre-tags span {
+    display: inline-block;
+    padding: 5px 10px;
+    background-color: #ddd;
+    border-radius: 5px;
+    margin-right: 5px;
+    font-size: 12px;
+  }
+
+  .genre-tags svg {
+    width: 12px !important;
+    height: 12px !important;
+    display: inline-block !important;
+    vertical-align: middle;
+  }
+
+  .genre-tags svg path {
+    fill: #4a5d6d;
+  }
+
+  /* 編集モーダル */
+  #editModal {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background-color: rgba(0, 0, 0, 0.5);
+    display: none;
+    justify-content: center;
+    align-items: center;
+    z-index: 1000;
+  }
+
+  .modal-content {
+    background-color: white;
+    padding: 20px;
+    border-radius: 10px;
+    width: 80%;
+    max-width: 500px;
+    box-shadow: 0px 0px 10px rgba(0, 0, 0, 0.2);
+  }
+
+  .button-container {
+    display: flex;
+    justify-content: flex-end;
+    gap: 10px;
+  }
+
+  .edit-button,
+  .delete-button {
+    padding: 5px 10px;
+    border-radius: 5px;
+    cursor: pointer;
+  }
+
+  .edit-button {
+    background-color: #28a745;
+    color: white;
+  }
+
+  .edit-button:hover {
+    background-color: #218838;
+  }
+
+  .delete-button {
+    background-color: #dc3545;
+    color: white;
+  }
+
+  .delete-button:hover {
+    background-color: #c82333;
+  }
+
+  /* ▼ ドロップダウンメニューのスタイル ▼ */
+.dropdown {
+  position: relative;
+  display: inline-block;
+  margin: 10px 20px;
+}
+
+.dropbtn {
+  background-color: #2c3e50;
+  color: white;
+  padding: 10px 32px;
+  font-size: 14px;
+  border: none;
+  border-radius: 6px;
+  cursor: pointer;
+}
+
+.dropdown-content {
+  display: none;
+  position: absolute;
+  background-color: white;
+  min-width: 180px;
+  box-shadow: 0px 8px 16px rgba(0, 0, 0, 0.15);
+  z-index: 1;
+  border-radius: 6px;
+  overflow: hidden;
+  border: 1px solid #ccc;
+}
+
+.dropdown-content a {
+  color: #2c3e50;
+  padding: 10px 16px;
+  text-decoration: none;
+  display: block;
+  font-size: 14px;
+}
+
+.dropdown-content a:hover {
+  background-color: #f2f2f2;
+}
+
+.dropdown:hover .dropdown-content {
+  display: block;
+}
+
+.dropdown:hover .dropbtn {
+  background-color: #1a2b3a;
+}
+  
+
+  
+  /* フッター */
+  footer {
+    text-align: center;
+    padding: 20px;
+    font-size: 12px;
+    color: #888;
+    background-color: #fefefe;
+  }
+
+  footer a {
+    color: #888;
+    text-decoration: none;
+  }
+
+  footer a:hover {
+    text-decoration: underline;
+  }
+</style>
+	
+	
+</head>
+<body>
+	
+	<div id="debugArea"></div>
+	
+
+<div class="dropdown">
+  <button class="dropbtn">メニュー</button>
+  <div class="dropdown-content">
+    <a href="admin.html">新規曲の追加</a>
+    <a href="view.html">公開ページへ</a>
+    <a href="setting.html">設定（メール/PW変更）</a>
+  </div>
+</div>
+
+	
+    <h1>歌える曲リスト</h1>
+	
+
+    <!-- 🔍アイコン -->
+	<div class="search-icon" onclick="toggleSearch()">
+  <svg class="search-icon-svg" width="24" height="24" viewBox="0 0 24 24" fill="#2c3e50" xmlns="http://www.w3.org/2000/svg">
+    <path d="M10 2a8 8 0 105.293 14.293l5.207 5.207a1 1 0 001.414-1.414l-5.207-5.207A8 8 0 0010 2zm0 2a6 6 0 110 12 6 6 0 010-12z"/>
+  </svg>
+  <span class="search-label">検索はコチラ</span>
+</div>
+
+    <!-- 検索ボックス -->
+    <div class="search-container" id="searchContainer">
+        <h2>🔍 検索</h2>
+
+        <label>キーワード検索</label>
+        <input type="text" id="searchInput" placeholder="アーティスト名・曲名で検索">
+
+<div class="search-section-title">ジャンル検索</div>
+        <div class="checkbox-group" id="genreFilters">
+            <label><input type="checkbox" value="男性ボーカル"> 男性ボーカル</label>
+            <label><input type="checkbox" value="女性ボーカル"> 女性ボーカル</label>
+            <label><input type="checkbox" value="アニメ"> アニメ</label>
+            <label><input type="checkbox" value="ドラマ"> ドラマ</label>
+            <label><input type="checkbox" value="映画"> 映画</label>
+            <label><input type="checkbox" value="バラード"> バラード</label>
+            <label><input type="checkbox" value="ロック"> ロック</label>
+            <label><input type="checkbox" value="アゲアゲ"> アゲアゲ</label>
+            <label><input type="checkbox" value="ボカロ"> ボカロ</label>
+            <label><input type="checkbox" value="オリジナル"> オリジナル</label>
+        </div>
+
+				<!-- 年代検索ラベルを追加 -->
+<div class="search-section-title">年代検索</div>
+<div class="checkbox-group" id="decadeFilters">
+  <label><input type="checkbox" value="1960年代">1960年代</label>
+  <label><input type="checkbox" value="1970年代">1970年代</label>
+  <label><input type="checkbox" value="1980年代">1980年代</label>
+  <label><input type="checkbox" value="1990年代">1990年代</label>
+  <label><input type="checkbox" value="2000年代">2000年代</label>
+  <label><input type="checkbox" value="2010年代">2010年代</label>
+  <label><input type="checkbox" value="2020年代">2020年代</label>
+</div>
+		
+        <button onclick="searchSongs()">検索</button>
+        <button onclick="clearSearch()">クリア</button>
+    </div>
+
+    <div class="song-list" id="songListContainer"></div>
+	
+	<!-- モーダルウィンドウ -->
+<div id="editModal" style="display: none;">
+    <div class="modal-content">
+        <h3>曲情報の編集</h3>
+        <label for="editArtist">アーティスト名:</label>
+        <input type="text" id="editArtist" /><br/>
+
+        <label for="editSong">曲名:</label>
+        <input type="text" id="editSong" /><br/>
+
+        <label for="editGenres">ジャンル:</label><br/>
+        <label><input type="checkbox" value="男性ボーカル" id="editGenre男性ボーカル"> 男性ボーカル</label><br/>
+        <label><input type="checkbox" value="女性ボーカル" id="editGenre女性ボーカル"> 女性ボーカル</label><br/>
+        <label><input type="checkbox" value="アニメ" id="editGenreアニメ"> アニメ</label><br/>
+        <label><input type="checkbox" value="ドラマ" id="editGenreドラマ"> ドラマ</label><br/>
+        <label><input type="checkbox" value="映画" id="editGenre映画"> 映画</label><br/>
+        <label><input type="checkbox" value="バラード" id="editGenreバラード"> バラード</label><br/>
+        <label><input type="checkbox" value="ロック" id="editGenreロック"> ロック</label><br/>
+        <label><input type="checkbox" value="アゲアゲ" id="editGenreアゲアゲ"> アゲアゲ</label><br/>
+		<label><input type="checkbox" value="ボカロ" id="editGenreボカロ"> ボカロ</label><br/>
+        <label><input type="checkbox" value="オリジナル" id="editGenreオリジナル"> オリジナル</label><br/>
+
+        <label for="editDecade">年代:</label>
+        <select id="editDecade">
+            <option value="1960年代">1960年代</option>
+            <option value="1970年代">1970年代</option>
+            <option value="1980年代">1980年代</option>
+            <option value="1990年代">1990年代</option>
+            <option value="2000年代">2000年代</option>
+            <option value="2010年代">2010年代</option>
+            <option value="2020年代">2020年代</option>
+        </select><br/>
+
+		<!-- hiddenでFirebaseのIDを保持する -->
+        <input type="hidden" id="editDocId" />
+		
+        <button id="saveButton">保存</button>
+        <button onclick="closeModal()">キャンセル</button>
+    </div>
+	
+
+</div>
+
+
+<footer>
+  <small>
+    アイコン提供：<a href="https://www.flaticon.com/uicons" target="_blank" rel="noopener noreferrer">UIcons</a>（<a href="https://www.flaticon.com/" target="_blank" rel="noopener noreferrer">Flaticon</a>）
+  </small>
+</footer>
+
+<script type="module">
+  import { initializeApp } from "https://www.gstatic.com/firebasejs/11.5.0/firebase-app.js";
+  import { getFirestore, collection, getDocs, deleteDoc, doc, updateDoc } from "https://www.gstatic.com/firebasejs/11.5.0/firebase-firestore.js";
+
+  // Firebase 設定
+  const firebaseConfig = {
+    apiKey: "AIzaSyADnhEAakgkAWR7OxPdK1K95uYDrVbM0ro",
+    authDomain: "songlist-axyon.firebaseapp.com",
+    projectId: "songlist-axyon",
+    storageBucket: "songlist-axyon.appspot.com",
+    messagingSenderId: "1088637040793",
+    appId: "1:1088637040793:web:c6fd53751988fe0d8b6008"
+  };
+
+  const app = initializeApp(firebaseConfig);
+  const db = getFirestore(app);
+
+  // データ取得 ＋ 表示処理に渡す
+  async function fetchAndDisplaySongs() {
+    try {
+      const querySnapshot = await getDocs(collection(db, "songs"));
+      const songList = [];
+
+      querySnapshot.forEach((docSnap) => {
+        const data = docSnap.data();
+        data.id = docSnap.id; // ID付与
+        songList.push(data);
+      });
+
+      // 50音順ソート（artistFurigana優先）
+      songList.sort((a, b) => {
+        const aFuri = a.artistFurigana || a.artist || "";
+        const bFuri = b.artistFurigana || b.artist || "";
+        return aFuri.localeCompare(bFuri, "ja");
+      });
+
+      // 表示処理呼び出し（外のスクリプト）
+      if (typeof window.displaySongs === "function") {
+          window.__latestSongList = songList;
+		  window.displaySongs(songList);
+      } else {
+        console.error("displaySongs 関数が見つかりません！");
+      }
+
+    } catch (error) {
+      console.error("❌ Firebase からの取得エラー:", error);
+    }
+  }
+
+  // Firebase削除処理
+  window.deleteSong = async function (docId) {
+    if (!confirm("本当に削除しますか？")) return;
+
+    try {
+      const docRef = doc(db, "songs", docId);
+      await deleteDoc(docRef);
+      alert("✅ Firebaseから削除しました");
+      fetchAndDisplaySongs();
+    } catch (error) {
+      console.error("❌ Firebase削除エラー:", error);
+      alert("削除に失敗しました");
+    }
+  };
+
+  // Firebase更新処理（編集時）
+  window.updateSong = async function (docId, updatedData) {
+    try {
+      const docRef = doc(db, "songs", docId);
+      await updateDoc(docRef, updatedData);
+      alert("✅ Firebaseを更新しました！");
+      fetchAndDisplaySongs();
+    } catch (error) {
+      console.error("❌ Firebase更新エラー:", error);
+      alert("更新に失敗しました");
+    }
+  };
+  
+  // 編集モーダルを開く関数
+window.editSong = function (docId) {
+  const allSongs = window.__latestSongList || [];
+  const song = allSongs.find(s => s.id === docId);
+
+  if (!song) {
+    alert("⚠️ 曲データが見つかりませんでした！");
+    return;
+  }
+
+  // 入力欄にデータをセット
+  document.getElementById("editArtist").value = song.artist || "";
+  document.getElementById("editSong").value = song.song || "";
+  document.getElementById("editDecade").value = song.decade || "";
+
+  // チェックボックスをリセット
+  document.querySelectorAll("#editModal input[type='checkbox']").forEach(cb => cb.checked = false);
+  if (song.genres && Array.isArray(song.genres)) {
+    song.genres.forEach(genre => {
+      const checkbox = document.getElementById(`editGenre${genre}`);
+      if (checkbox) checkbox.checked = true;
+    });
+  }
+
+  // モーダルを開く
+  document.getElementById("editModal").style.display = "block";
+
+  // 保存ボタンに処理を登録（古いハンドラが残らないように毎回設定）
+  const saveButton = document.getElementById("saveButton");
+  saveButton.onclick = function () {
+  const updatedData = {
+    artist: document.getElementById("editArtist").value,
+    song: document.getElementById("editSong").value,
+    decade: document.getElementById("editDecade").value,
+    genres: Array.from(document.querySelectorAll("#editModal input[type='checkbox']:checked")).map(cb => cb.value)
+  };
+
+  window.updateSong(docId, updatedData).then(() => {
+    closeModal();
+  });
+};
+};  
+
+  // ページ読み込み時に実行
+  fetchAndDisplaySongs();
+</script>
+
+<script>
+	
+  // ⭐ ジャンルごとのアイコン（SVGコードは省略）⭐
+  　　　const genreIcons = {
+	
+    "男性ボーカル": `<svg width="24" height="24" viewBox="0 0 512 512" xmlns="http://www.w3.org/2000/svg">
+        <path d= "M437.46 0h-85.189c-17.643 0-31.946 14.303-31.946 31.946s14.303 31.946 31.946 31.946h50.666L285.185 181.644c-82.229-57.281-195.324-37.057-252.605 45.171S-4.477 422.139 77.751 479.42s195.324 37.057 252.605-45.171c43.419-62.328 43.419-145.105 0-207.434l117.752-117.752v50.666c0 17.643 14.303 31.946 31.946 31.946S512 177.372 512 159.729V74.54C512 33.373 478.627 0 437.46 0zM181.893 447.241c-64.692 0-117.135-52.443-117.135-117.135s52.443-117.135 117.135-117.135 117.135 52.443 117.135 117.135c-.07 64.663-52.472 117.065-117.135 117.135z"/>
+    </svg>`,
+	
+    "女性ボーカル": `<svg width="24" height="24" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+        <path d= "M20 8a8 8 0 1 0-9.5 7.854V18H9a1.5 1.5 0 0 0 0 3h1.5v1.5a1.5 1.5 0 0 0 3 0V21H15a1.5 1.5 0 0 0 0-3h-1.5v-2.146A8.01 8.01 0 0 0 20 8ZM7 8a5 5 0 1 1 5 5 5.006 5.006 0 0 1-5-5Z"/>
+    </svg>`,
+	
+    "アニメ": `<svg width="24" height="24" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+        <path d= "M5.3 18.7a2.4 2.4 0 0 1 0 3.394 12.8 12.8 0 0 1-4.212 1.88.887.887 0 0 1-1.065-1.059A12.8 12.8 0 0 1 1.9 18.7a2.4 2.4 0 0 1 3.4 0Zm10.745-1.087ZM6.257 8.139c.033-.046.016-.023 0 0ZM18 8.5a2.5 2.5 0 0 0-5 0 2.5 2.5 0 0 0 5 0Zm-1.976 9.129.008-.006a12.106 12.106 0 0 1-.823 2.111 8.713 8.713 0 0 1-3.848 4.07A2.427 2.427 0 0 1 8 21.554V19a3.015 3.015 0 0 0-3-3H2.392a2.373 2.373 0 0 1-2.2-3.287 8.518 8.518 0 0 1 3.98-3.763 11.881 11.881 0 0 1 2.085-.811c-.016.022-.031.044 0 0C10.088 2.8 14.469.171 20.458 0A3.513 3.513 0 0 1 24 3.5c-.171 6.031-2.625 10.293-7.967 14.123ZM21 3.458A.493.493 0 0 0 20.5 3c-5.036.144-8.3 2-11.612 6.614a28.038 28.038 0 0 0-2.153 3.64 6.018 6.018 0 0 1 3.984 3.922l2.163-1.076c.506-.3 1.018-.634 1.505-.983C19 11.8 20.856 8.536 21 3.458Zm-4.968 14.165.01-.007-.009.007Z"/>
+    </svg>`,
+
+    "ドラマ": `<svg width="24" height="24" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+        <path d= "M18.5 6h-3.241l3.323-3.461A1.5 1.5 0 0 0 16.418.461L12 5.063 7.582.461a1.501 1.501 0 0 0-2.164 2.078L8.741 6H5.5A5.506 5.506 0 0 0 0 11.5v7C0 21.533 2.467 24 5.5 24h13c3.033 0 5.5-2.467 5.5-5.5v-7C24 8.467 21.533 6 18.5 6ZM21 18.5c0 1.378-1.122 2.5-2.5 2.5h-13A2.503 2.503 0 0 1 3 18.5v-7C3 10.122 4.122 9 5.5 9h13c1.378 0 2.5 1.122 2.5 2.5v7ZM14 12v6a1 1 0 0 1-1 1H6a1 1 0 0 1-1-1v-6a1 1 0 0 1 1-1h7a1 1 0 0 1 1 1Zm5 .5a1.5 1.5 0 1 1-3.001-.001A1.5 1.5 0 0 1 19 12.5Zm0 5a1.5 1.5 0 1 1-3.001-.001A1.5 1.5 0 0 1 19 17.5Z"/>
+    </svg>`,
+
+    "映画": `<svg width="24" height="24" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+        <path d= "M9 4a4 4 0 1 1-8 0 4 4 0 0 1 8 0Zm5-4a4 4 0 1 0 0 8 4 4 0 0 0 0-8Zm5 14v6a4 4 0 0 1-4 4H4a4 4 0 0 1-4-4v-6a4 4 0 0 1 4-4h11a4 4 0 0 1 4 4Zm2.765-2.114-.765.765v7.75l.765.765c.825.825 2.235.241 2.235-.926v-7.429c0-1.166-1.41-1.75-2.235-.926Z"/>
+    </svg>`,
+
+    "バラード": `<svg width="24" height="24" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+        <path d= "M10 9a2 2 0 0 1-4 0 2 2 0 0 1 4 0Zm6-2a2 2 0 0 0 0 4 2 2 0 0 0 0-4Zm8 5C23.4-3.9.6-3.893 0 12a1.5 1.5 0 0 0 3 0C3.452.076 20.55.08 21 12a9.047 9.047 0 0 1-12 8.488 1.5 1.5 0 1 0-1 2.828A12.006 12.006 0 0 0 24 12ZM3 16.5a2.5 2.5 0 0 0 5 0c.072-1.083-1.837-5.626-3.072-4.231A8.359 8.359 0 0 0 3 16.5Zm14.065.556a1.5 1.5 0 0 0-.009-2.121A7.452 7.452 0 0 0 12 13a7.64 7.64 0 0 0-1.87.233 1.5 1.5 0 0 0 .74 2.909 4.589 4.589 0 0 1 4.084.933 1.5 1.5 0 0 0 2.111-.019Z"/>
+    </svg>`,
+	
+    "ロック": `<svg width="24" height="24" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+        <path d= "M22.561 1.439A1.495 1.495 0 0 0 21.5 1c-2.019 0-2.144.077-2.856.712l-.683.635c-1.007.949-1.15 1.847-.763 2.334l-3.337 3.337c-1.351-1.578-1.074-2.183.2-3.457a1.5 1.5 0 0 0 0-2.121c-.577-.55-1.544-.55-2.121 0-1.137 1.169-1.866 2.538-2.687 3.648-.505.76-.871 1.309-1.331 1.635-.929.658-1.768.949-2.578 1.229-.954.33-1.94.671-2.831 1.562C1.481 11.547 1 12.496 1 13.501c0 .994.459 2.373 3.793 5.707s4.712 3.793 5.707 3.793c1.004 0 1.954-.481 2.987-1.514.89-.89 1.231-1.876 1.562-2.83.281-.811.571-1.649 1.23-2.579.326-.46.875-.825 1.634-1.331 1.113-.822 2.478-1.548 3.648-2.687a1.5 1.5 0 1 0-2.121-2.121c-1.275 1.273-1.88 1.549-3.457.2l6.578-6.578a1.5 1.5 0 0 0 0-2.121zM10.207 17.207a.999.999 0 0 1-1.414 0l-2-2a.999.999 0 1 1 1.414-1.414l2 2a.999.999 0 0 1 0 1.414zm2.5-2.5a.999.999 0 0 1-1.414 0l-2-2a.999.999 0 1 1 1.414-1.414l2 2a.999.999 0 0 1 0 1.414z"/>
+    </svg>`,
+
+    "アゲアゲ": `<svg width="24" height="24" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+        <path d="M16.773 2.9c-.747-.634-1.53-1.3-2.327-2.024a3.354 3.354 0 0 0-2.715-.845A3.264 3.264 0 0 0 9.4 1.516a18.708 18.708 0 0 0-2.126 5.02 2.458 2.458 0 0 0-3.795-.163 9.159 9.159 0 0 0-2.61 6.493A11.024 11.024 0 0 0 9.133 23.64a11.667 11.667 0 0 0 2.857.36 11.122 11.122 0 0 0 11.137-11.126c0-4.574-2.944-7.074-6.354-9.974Zm.218 16.386a7.974 7.974 0 0 1-.9.6 4.486 4.486 0 0 0 .44-1.919c0-1.927-1.343-4.164-3-6.125a2.025 2.025 0 0 0-3.079 0C8.1 14.6 6.627 17.582 8 20a8.1 8.1 0 0 1-4.129-7.127 5.951 5.951 0 0 1 1.345-3.9q.212.348.455.673a2.3 2.3 0 0 0 2.375.87 2.364 2.364 0 0 0 1.8-1.826 17.255 17.255 0 0 1 2.091-5.567.259.259 0 0 1 .195-.123.367.367 0 0 1 .295.093 90.057 90.057 0 0 0 2.405 2.091c3.189 2.708 5.295 4.5 5.295 7.686a8.081 8.081 0 0 1-3.136 6.418Z"/>
+    </svg>`,
+	
+    "ボカロ": `<svg width="24" height="24" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+        <path d= "M12 9a3 3 0 1 0 3 3 3 3 0 0 0-3-3Zm0 4a1 1 0 1 1 1-1 1 1 0 0 1-1 1Zm0-13a12 12 0 1 0 12 12A12.013 12.013 0 0 0 12 0Zm0 17a5 5 0 1 1 5-5 5.006 5.006 0 0 1-5 5Z"/>
+    </svg>`,
+
+    "オリジナル": `<svg width="24" height="24" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+        <path d= "M24 20.5v.004a2.5 2.5 0 1 1-2-2.45v-3.917a.987.987 0 0 0-.345-.755.992.992 0 0 0-.797-.235l-2.57.367A1.508 1.508 0 0 0 17 14.999v6.504a2.5 2.5 0 1 1-2-2.45v-4.054c0-1.73 1.292-3.22 3.005-3.465l2.571-.367A2.999 2.999 0 0 1 24 14.137v6.362ZM8 12c3.309 0 6-2.691 6-6s-2.691-6-6-6-6 2.691-6 6 2.691 6 6 6Zm5 5.261V15c0-.016.004-.032.004-.048A8.926 8.926 0 0 0 9 14c-4.962 0-9 4.038-9 9a1 1 0 0 0 1 1h9.76a4.47 4.47 0 0 1-.76-2.496 4.508 4.508 0 0 1 3-4.243Z"/>
+    </svg>`
+	    // 他のジャンルも同じように追加！
+};
+  
+
+  // ⭐ 曲リストの表示処理
+  function displaySongs(songList) {
+  const container = document.getElementById("songListContainer");
+  container.innerHTML = "";
+
+  if (!songList.length) {
+    container.innerHTML = "<p>🎵 曲が登録されていません</p>";
+    return;
+  }
+
+  // 50音順ソート
+  songList.sort((a, b) => {
+    const aFuri = a.artistFurigana || a.artist || "";
+    const bFuri = b.artistFurigana || b.artist || "";
+    return aFuri.localeCompare(bFuri, "ja");
+  });
+
+  let currentArtist = "";
+  songList.forEach(song => {
+    const artist = song.artist || "不明なアーティスト";
+    const title = song.song || "不明な曲";
+    const genreHTML = (song.genres || []).map(g => genreIcons[g] || "").join("");
+
+    if (artist !== currentArtist) {
+      const artistHeader = document.createElement("h2");
+      artistHeader.textContent = artist;
+      container.appendChild(artistHeader);
+      currentArtist = artist;
+    }
+
+    const songDiv = document.createElement("div");
+    songDiv.className = "song";
+    songDiv.innerHTML = `
+      <div>
+        <div class="song-title">${title}</div>
+        <div class="genre-tags">${genreHTML}</div>
+      </div>
+      <div class="button-container">
+        <button class="edit-button" onclick="editSong('${song.id}')">編集</button>
+        <button class="delete-button" onclick="deleteSong('${song.id}')">削除</button>
+      </div>
+    `;
+    container.appendChild(songDiv);
+  });
+}
+
+
+  
+  // ⭐ 検索ブロックの開閉
+  function toggleSearch() {
+    const box = document.getElementById("searchContainer");
+    box.style.display = box.style.display === "none" ? "block" : "none";
+  }
+
+  // ⭐ 検索処理
+  function searchSongs() {
+  const keyword = document.getElementById("searchInput").value.trim().toLowerCase();
+  const selectedGenres = [...document.querySelectorAll("#genreFilters input:checked")].map(cb => cb.value);
+  const selectedDecades = [...document.querySelectorAll("#decadeFilters input:checked")].map(cb => cb.value);
+  const allSongs = JSON.parse(localStorage.getItem("songList")) || [];
+
+  const filtered = allSongs.filter(song => {
+    const matchKeyword =
+      (song.artist || "").toLowerCase().includes(keyword) ||
+      (song.artistFurigana || "").toLowerCase().includes(keyword) ||
+      (song.song || "").toLowerCase().includes(keyword) ||
+      (song.songFurigana || "").toLowerCase().includes(keyword);
+
+    const matchGenre =
+      selectedGenres.length === 0 || song.genres.some(g => selectedGenres.includes(g));
+
+    const matchDecade =
+      selectedDecades.length === 0 || selectedDecades.includes(song.decade); // ← "1980年代" 対応済み！
+
+    return matchKeyword && matchGenre && matchDecade;
+  });
+
+  displaySongs(filtered);
+  document.getElementById("searchContainer").style.display = "none";
+}
+
+  // ⭐ 検索クリア
+  function clearSearch() {
+  document.getElementById("searchInput").value = "";
+  document.querySelectorAll("#genreFilters input").forEach(cb => (cb.checked = false));
+
+  let allSongs = JSON.parse(localStorage.getItem("songList")) || [];
+
+  // ★ここでソート追加！
+  allSongs.sort((a, b) => {
+    const aFuri = a.artistFurigana || a.artist || "";
+    const bFuri = b.artistFurigana || b.artist || "";
+    return aFuri.localeCompare(bFuri, "ja");
+  });
+
+  displaySongs(allSongs);
+}
+
+  // ⭐ 編集処理
+
+
+  
+
+// モーダルを閉じる関数
+function closeModal() {
+    document.getElementById('editModal').style.display = 'none';
+}
+		
+
+	</script>
+	
+</body>
+</html>
