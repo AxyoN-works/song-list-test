@@ -514,6 +514,7 @@
 
       // 表示処理呼び出し（外のスクリプト）
       if (typeof window.displaySongs === "function") {
+	      		  window.__latestSongList = songList;
 		  currentSongList = songList; // ⭐ ページネーションで使うリストとして保存！
           currentPage = 1;            // ⭐ ページ番号リセットもここで！
           displaySongs(currentSongList); // ⭐ 書き換えた関数を呼び出す！
@@ -733,11 +734,11 @@ function renderPagination(totalItems) {
   }
 
   // ⭐ 検索処理
-  function searchSongs() {
+    function searchSongs() {
   const keyword = document.getElementById("searchInput").value.trim().toLowerCase();
   const selectedGenres = [...document.querySelectorAll("#genreFilters input:checked")].map(cb => cb.value);
   const selectedDecades = [...document.querySelectorAll("#decadeFilters input:checked")].map(cb => cb.value);
-  const allSongs = currentSongList || [];
+  const allSongs = window.__latestSongList || [];
 
   const filtered = allSongs.filter(song => {
     const matchKeyword =
@@ -766,8 +767,9 @@ function renderPagination(totalItems) {
   function clearSearch() {
   document.getElementById("searchInput").value = "";
   document.querySelectorAll("#genreFilters input").forEach(cb => (cb.checked = false));
+  document.querySelectorAll("#decadeFilters input").forEach(cb => (cb.checked = false)); // 年代も忘れずに！
 
-  currentSongList = [...fullSongList]; // ⭐ ← 全曲を再セット
+  currentSongList = [...(window.__latestSongList || [])]; // ← 全曲をコピー
   currentPage = 1;
 
   // 再ソート（ふりがな順）
@@ -779,7 +781,6 @@ function renderPagination(totalItems) {
 
   displaySongs(currentSongList);
 }
-
   // ⭐ 編集処理
 
 
