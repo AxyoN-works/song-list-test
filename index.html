@@ -16,14 +16,14 @@
 
   /* タイトルロゴ部分 */
   h1 {
-    background-image: url('rogo.png');
-    background-size: contain;
-    background-position: center center;
-    background-repeat: no-repeat; /* 画像がリピートしないようにする */
+    background-image: url('images/rogo.png');
+    background-size: contain; /* 画像を親要素に合わせて縦横比を保ちながらカバー */
+    background-position: center center; /* 画像を中央に配置 */
+	background-repeat: no-repeat; /* 画像がリピートしないようにする */
     color: white;
     padding-left: 30px;
     padding-top: 20px;
-    padding-bottom: 10px;
+	padding-bottom: 10px;
     height: 200px;
     display: flex;
     justify-content: flex-start;
@@ -307,6 +307,36 @@
 }
   
 
+/* ページネーション全体の枠 */
+.pagination {
+  text-align: center;
+  margin-top: 30px;
+}
+
+/* ページボタンのスタイル */
+.pagination button {
+  background-color: #2c3e50; /* ネイビー */
+  color: #fff;
+  border: none;
+  padding: 6px 12px;
+  margin: 0 4px;
+  font-size: 12px;
+  border-radius: 4px;
+  cursor: pointer;
+  transition: background-color 0.2s ease;
+}
+
+/* ホバー時（薄めグレー） */
+.pagination button:hover {
+  background-color: #4a6377;
+}
+
+/* 現在のページ（強調） */
+.pagination button.active-page {
+  background-color: #888; /* グレー */
+  font-weight: bold;
+}
+
   
   /* フッター */
   footer {
@@ -392,7 +422,9 @@
         <button onclick="clearSearch()">クリア</button>
     </div>
 
-    <div class="song-list" id="songListContainer"></div>
+	<!-- 曲リスト表示 -->
+<div id="songListContainer" class="song-list"></div>
+<div id="pagination" class="pagination"></div>
 	
 	<!-- モーダルウィンドウ -->
 <div id="editModal" style="display: none;">
@@ -482,8 +514,9 @@
 
       // 表示処理呼び出し（外のスクリプト）
       if (typeof window.displaySongs === "function") {
-          window.__latestSongList = songList;
-		  window.displaySongs(songList);
+		  currentSongList = songList; // ⭐ ページネーションで使うリストとして保存！
+          currentPage = 1;            // ⭐ ページ番号リセットもここで！
+          displaySongs(currentSongList); // ⭐ 書き換えた関数を呼び出す！
       } else {
         console.error("displaySongs 関数が見つかりません！");
       }
@@ -616,8 +649,11 @@ window.editSong = function (docId) {
 };
   
 
-  // ⭐ 曲リストの表示処理
-  function displaySongs(songList) {
+let currentSongList = [];
+let currentPage = 1;
+const ITEMS_PER_PAGE = 50;
+
+function displaySongs(songList) {
   const container = document.getElementById("songListContainer");
   container.innerHTML = "";
 
@@ -633,8 +669,13 @@ window.editSong = function (docId) {
     return aFuri.localeCompare(bFuri, "ja");
   });
 
+  // ページに応じて表示する範囲を決める
+  const start = (currentPage - 1) * ITEMS_PER_PAGE;
+  const end = start + ITEMS_PER_PAGE;
+  const pageData = songList.slice(start, end);
+
   let currentArtist = "";
-  songList.forEach(song => {
+  pageData.forEach(song => {
     const artist = song.artist || "不明なアーティスト";
     const title = song.song || "不明な曲";
     const genreHTML = (song.genres || []).map(g => genreIcons[g] || "").join("");
@@ -660,9 +701,30 @@ window.editSong = function (docId) {
     `;
     container.appendChild(songDiv);
   });
+
+  renderPagination(songList.length);
 }
 
+// ページボタンを表示する
+function renderPagination(totalItems) {
+	
+  const paginationContainer = document.getElementById("pagination");
+  paginationContainer.innerHTML = "";
 
+  const totalPages = Math.ceil(totalItems / ITEMS_PER_PAGE);
+  if (totalPages <= 1) return;
+
+  for (let i = 1; i <= totalPages; i++) {
+    const btn = document.createElement("button");
+    btn.textContent = i;
+    btn.className = (i === currentPage) ? "active-page" : "";
+    btn.onclick = () => {
+      currentPage = i;
+      displaySongs(currentSongList); // currentSongList は最新の曲リスト（検索後も含めて）を保持しておく変数
+    };
+    paginationContainer.appendChild(btn);
+  }
+}
   
   // ⭐ 検索ブロックの開閉
   function toggleSearch() {
@@ -675,7 +737,7 @@ window.editSong = function (docId) {
   const keyword = document.getElementById("searchInput").value.trim().toLowerCase();
   const selectedGenres = [...document.querySelectorAll("#genreFilters input:checked")].map(cb => cb.value);
   const selectedDecades = [...document.querySelectorAll("#decadeFilters input:checked")].map(cb => cb.value);
-  const allSongs = JSON.parse(localStorage.getItem("songList")) || [];
+  const allSongs = currentSongList || [];
 
   const filtered = allSongs.filter(song => {
     const matchKeyword =
@@ -688,12 +750,15 @@ window.editSong = function (docId) {
       selectedGenres.length === 0 || song.genres.some(g => selectedGenres.includes(g));
 
     const matchDecade =
-      selectedDecades.length === 0 || selectedDecades.includes(song.decade); // ← "1980年代" 対応済み！
+      selectedDecades.length === 0 || selectedDecades.includes(song.decade);
 
     return matchKeyword && matchGenre && matchDecade;
   });
 
-  displaySongs(filtered);
+  currentSongList = filtered;   // ⭐ ← 検索結果を保存
+  currentPage = 1;              // ⭐ ← ページ番号を1ページ目にリセット
+  displaySongs(currentSongList);
+
   document.getElementById("searchContainer").style.display = "none";
 }
 
@@ -702,16 +767,17 @@ window.editSong = function (docId) {
   document.getElementById("searchInput").value = "";
   document.querySelectorAll("#genreFilters input").forEach(cb => (cb.checked = false));
 
-  let allSongs = JSON.parse(localStorage.getItem("songList")) || [];
+  currentSongList = [...fullSongList]; // ⭐ ← 全曲を再セット
+  currentPage = 1;
 
-  // ★ここでソート追加！
-  allSongs.sort((a, b) => {
+  // 再ソート（ふりがな順）
+  currentSongList.sort((a, b) => {
     const aFuri = a.artistFurigana || a.artist || "";
     const bFuri = b.artistFurigana || b.artist || "";
     return aFuri.localeCompare(bFuri, "ja");
   });
 
-  displaySongs(allSongs);
+  displaySongs(currentSongList);
 }
 
   // ⭐ 編集処理
